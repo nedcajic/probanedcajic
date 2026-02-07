@@ -1,0 +1,80 @@
+import { DayCount } from "@/types/trip";
+import { cn } from "@/lib/utils";
+import { format, subDays } from "date-fns";
+import { sr } from "date-fns/locale";
+
+interface DayCounterProps {
+  dayCount: DayCount;
+}
+
+export function DayCounter({ dayCount }: DayCounterProps) {
+  const { used, remaining, percentage, overstay } = dayCount;
+  const today = new Date();
+  const periodStart = subDays(today, 179);
+  
+  const getStatusColor = () => {
+    if (used > 90) return "text-foreground";
+    if (used >= 80) return "text-destructive";
+    return "text-success";
+  };
+  
+  const getProgressColor = () => {
+    if (used > 90) return "bg-foreground";
+    if (used >= 80) return "bg-destructive";
+    return "bg-success";
+  };
+
+  return (
+    <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-lg border border-border animate-slide-up">
+      <div className="text-center mb-6 sm:mb-8">
+        <h2 className="text-base sm:text-lg font-medium text-muted-foreground mb-2">Preostalo dana</h2>
+        <div className={cn("text-5xl sm:text-7xl font-bold tracking-tight", getStatusColor())}>
+          {remaining}
+        </div>
+      <p className="text-muted-foreground mt-2 text-sm">od 90 dana u 180-dnevnom periodu</p>
+      </div>
+
+      <div className="bg-muted/50 rounded-xl p-4 mb-6 sm:mb-8 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground mb-1">📅 Period obračuna (180 dana unazad):</p>
+        <p>Danas: <span className="font-semibold text-foreground">{format(today, "dd.MM.yyyy", { locale: sr })}.</span></p>
+        <p>Početak perioda: <span className="font-semibold text-foreground">{format(periodStart, "dd.MM.yyyy", { locale: sr })}.</span></p>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Iskorišćeno</span>
+          <span className="font-semibold">{used} dana</span>
+        </div>
+        
+        <div className="h-4 bg-muted rounded-full overflow-hidden">
+          <div 
+            className={cn("h-full rounded-full transition-all duration-500 ease-out", getProgressColor())}
+            style={{ width: `${Math.min(percentage, 100)}%` }}
+          />
+        </div>
+        
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">0</span>
+          <span className="text-muted-foreground">90 dana</span>
+        </div>
+      </div>
+
+      {overstay > 0 && (
+        <div className="mt-6 p-4 rounded-xl text-sm bg-foreground/10 text-foreground font-semibold">
+          🚫 Prekoračenje: {overstay} {overstay === 1 ? "dan" : "dana"} preko dozvoljenih 90 dana!
+        </div>
+      )}
+      
+      {overstay === 0 && used >= 80 && (
+        <div className={cn(
+          "mt-6 p-4 rounded-xl text-sm",
+          used >= 90 ? "bg-destructive/10 text-destructive" : "bg-destructive/10 text-destructive"
+        )}>
+          {used >= 90 
+            ? "⚠️ Pažnja! Dostigli ste limit od 90 dana."
+            : "📅 Imate još malo dana. Planirajte pažljivo."}
+        </div>
+      )}
+    </div>
+  );
+}
